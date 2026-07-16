@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$BASEDOG 🐕 | Meme Zone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    
+    body {
+      background: #0a0a0a;
+      color: #fff;
+    }
+    .meme-font {
+      font-family: "Press Start 2P", system-ui;
+    }
+    .post-card {
+      transition: all 0.3s ease;
+    }
+    .post-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+    .neon-text {
+      text-shadow: 0 0 10px #ffd700,
+                   0 0 20px #ffd700;
+    }
+    .dog-bg {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+  </style>
+</head>
+<body class="dog-bg min-h-screen">
+  <!-- Header -->
+  <div class="border-b border-yellow-500/30 bg-black/50">
+    <div class="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
+      <div class="flex items-center gap-x-4">
+        <div class="text-6xl">🐕</div>
+        <div>
+          <h1 class="meme-font text-4xl font-bold text-yellow-400 neon-text">$BASEDOG</h1>
+          <p class="text-yellow-500/70 text-sm tracking-[4px]">THE BASED MEME COIN</p>
+        </div>
+      </div>
+      <div class="px-4 py-2 bg-yellow-400 text-black rounded-full text-sm font-bold flex items-center gap-x-2">
+        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        LIVE FROM X
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 py-10">
+    <!-- Hero -->
+    <div class="text-center mb-12">
+      <div class="inline-block px-6 py-2 bg-yellow-400 text-black rounded-full text-sm font-bold mb-4">
+        OFFICIAL BASEDOG UPDATES
+      </div>
+      <h2 class="meme-font text-6xl font-bold mb-3">WELCOME TO THE<br>DOG HOUSE 🏠</h2>
+      <p class="text-xl text-yellow-400/80 max-w-md mx-auto">
+        Real-time posts from @officialbasedog<br>
+        Stay based. Stay memeing.
+      </p>
+    </div>
+
+    <!-- Posts Feed -->
+    <div class="mb-6 flex items-center justify-between">
+      <div class="flex items-center gap-x-3">
+        <div class="text-3xl">📡</div>
+        <div>
+          <div class="font-bold text-xl">LIVE FEED</div>
+          <div class="text-sm text-yellow-500/60">Powered by X Activity API</div>
+        </div>
+      </div>
+      <div class="text-sm px-4 py-1 bg-white/10 rounded-full">Connected to @officialbasedog</div>
+    </div>
+
+    <!-- Posts Container -->
+    <div id="posts" class="space-y-4 max-w-3xl mx-auto">
+      <!-- Posts will be injected here by JavaScript -->
+      <div class="post-card bg-zinc-900 border border-yellow-500/20 rounded-2xl p-6">
+        <div class="flex gap-x-4">
+          <div class="text-4xl">🐶</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-x-2 mb-1">
+              <span class="font-bold">@officialbasedog</span>
+              <span class="text-xs px-2 py-0.5 bg-yellow-400 text-black rounded">BASED</span>
+            </div>
+            <p class="text-lg">Welcome to $BASEDOG. The most based dog on the chain. 🐕‍🦺</p>
+            <div class="text-xs text-yellow-500/60 mt-3">Just now • post.create</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-8 text-xs text-yellow-500/50">
+      Connect this to your X Activity API stream to see real posts live
+    </div>
+  </div>
+
+  <script>
+    // Demo: Add a new post (replace this with real stream data)
+    function addPost(text) {
+      const container = document.getElementById('posts');
+      const postHTML = `
+        <div class="post-card bg-zinc-900 border border-yellow-500/20 rounded-2xl p-6">
+          <div class="flex gap-x-4">
+            <div class="text-4xl">🐕</div>
+            <div class="flex-1">
+              <div class="flex items-center gap-x-2 mb-1">
+                <span class="font-bold">@officialbasedog</span>
+                <span class="text-xs px-2 py-0.5 bg-yellow-400 text-black rounded">BASED</span>
+              </div>
+              <p class="text-lg">${text}</p>
+              <div class="text-xs text-yellow-500/60 mt-3">${new Date().toLocaleTimeString()} • post.create</div>
+            </div>
+          </div>
+        </div>
+      `;
+      container.insertAdjacentHTML('afterbegin', postHTML);
+      
+      // Keep only last 6 posts
+      while (container.children.length > 6) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    // Demo button (remove this in production)
+    setTimeout(() => {
+      addPost("Just dropped a new meme. Who’s still holding? 💎🐾");
+    }, 3000);
+  </script>
+</body>
+</html>
