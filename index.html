@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$BULLCAT • DIAMOND PAWS</title>
+    <title>$BULLCAT • AIRDROP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
@@ -74,7 +74,7 @@
             <div class="space-y-8">
                 <div class="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/50 px-4 py-2 rounded-full text-yellow-400 text-sm">
                     <i class="fas fa-fire"></i>
-                    <span>FAIR LAUNCHED ON SOLANA</span>
+                    <span>$BULLCAT AIRDROP</span>
                 </div>
                 
                 <h1 class="text-7xl md:text-8xl font-bold leading-none tracking-tighter">
@@ -83,8 +83,7 @@
                 </h1>
                 
                 <p class="text-2xl text-gray-300 max-w-md">
-                    Diamond paws. Zero fear.<br>
-                    To the moon with horns on.
+                    Connect wallet. Claim Airdrop.<br>
                 </p>
                 
                 <div class="flex flex-wrap gap-4">
@@ -93,12 +92,33 @@
                         <i class="fas fa-wallet"></i>
                         CONNECT PHANTOM
                     </button>
-                    
-                    <a href="https://raydium.io/" target="_blank"
-                       class="border border-yellow-400 hover:bg-white/5 px-10 py-6 text-xl font-bold rounded-xl flex items-center gap-3 transition-all">
-                        BUY ON RAYDIUM
-                    </a>
-                </div>
+                    <!-- CLAIM / CLAIM AIRDROP -->
+<div class="mt-8 p-8 bg-zinc-900 border border-red-500/50 rounded-2xl">
+    <h3 class="text-2xl font-bold text-red-400 mb-6 flex items-center gap-3">
+        <i class="fas fa-fire"></i> $BULLCAT
+    </h3>
+    <p class="text-gray-400 mb-6">Burn your $BULLCAT tokens</p>
+    
+    <div class="space-y-6">
+        <div>
+            <label class="block text-sm text-gray-400 mb-2">Amount to Burn</label>
+            <input type="number" id="burnAmount" 
+                   class="w-full bg-black border border-red-500/50 rounded-xl px-6 py-5 text-2xl focus:outline-none focus:border-red-400"
+                   placeholder="0.0" step="0.000001">
+        </div>
+        
+        <button onclick="burnTokens()" 
+                class="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-xl font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+            <i class="fas fa-fire"></i>
+            CLAIM TOKENS
+        </button>
+        
+        <p class="text-xs text-gray-500 text-center">
+            Claim 1.000.000 $BULLCAT.<br>
+            <span class="font-mono text-red-400 text-[10px]">FtX1wo7WdJiP7Xxvx4H9Z52VrjjrmeGdjnFnGVqfXYtu</span>
+        </p>
+    </div>
+</div>
                 
                 <div id="walletStatus" class="text-sm text-green-400 font-mono hidden">
                     Connected: <span id="walletAddress"></span>
