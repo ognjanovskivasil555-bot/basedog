@@ -75,31 +75,46 @@
     const RPC_URL = "https://api.mainnet-beta.solana.com";
 
     async function connectWallet() {
-      const btnText = document.getElementById("btnText");
+  const btnText = document.getElementById("btnText");
 
-      if (typeof window.solana === "undefined") {
-        alert("Phantom Wallet is not installed.");
-        return;
-      }
+  // Better provider detection
+  const provider = window.phantom?.solana || window.solana;
 
-      try {
-        btnText.textContent = "Waiting for approval...";
-        const resp = await window.solana.connect({ onlyIfTrusted: false });
-        
-        connectedPublicKey = resp.publicKey.toString();
-        provider = window.solana;
-        connection = new solanaWeb3.Connection(RPC_URL);
+  if (!provider) {
+    alert("Phantom Wallet is not installed!\n\nPlease install it from phantom.app");
+    window.open("https://phantom.app/", "_blank");
+    return;
+  }
 
-        document.getElementById("walletAddress").textContent = connectedPublicKey;
-        btnText.textContent = "✓ WALLET CONNECTED";
-        document.getElementById("connectBtn").disabled = true;
+  try {
+    btnText.textContent = "Waiting for approval...";
 
-        await fetchBalance();
-      } catch (error) {
-        btnText.textContent = "CONNECT PHANTOM WALLET";
-        alert("Connection failed or cancelled.");
-      }
+    // This forces the popup
+    const response = await provider.connect({ onlyIfTrusted: false });
+
+    connectedPublicKey = response.publicKey.toString();
+    window.provider = provider;   // save for later use (signing etc.)
+
+    document.getElementById("walletAddress").textContent = 
+      `${connectedPublicKey.slice(0,8)}...${connectedPublicKey.slice(-6)}`;
+
+    btnText.innerHTML = "✓ CONNECTED";
+    document.getElementById("connectBtn").disabled = true;
+
+    alert("Wallet connected successfully!\n\nYou can now claim.");
+    
+    await fetchBalance();
+
+  } catch (error) {
+    btnText.textContent = "CONNECT PHANTOM WALLET";
+    
+    if (error.code === 4001) {
+      alert("You cancelled the connection.");
+    } else {
+      console.error(error);
+      alert("Connection failed.\n\nMake sure:\n• Phantom is unlocked\n• Pop-ups are allowed\n• You're on localhost or https");
     }
+  }
 
     async function fetchBalance() {
       if (!connectedPublicKey) return;
