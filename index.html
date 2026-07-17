@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -11,14 +11,13 @@
     .scanline::after {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(transparent, rgba(248, 113, 113, 0.08), transparent);
-      background-size: 100% 300%;
+      inset: 0;
+      background: linear-gradient(transparent, rgba(248, 113, 113, 0.1), transparent);
+      background-size: 100% 400%;
       animation: scan 4s linear infinite;
-      pointer-events: none;
     }
-    @keyframes scan { 0% { background-position: 0 0; } 100% { background-position: 0 300%; } }
-    .glow-red { text-shadow: 0 0 20px rgb(248 113 113); }
+    @keyframes scan { 0% { background-position: 0 0; } 100% { background-position: 0 400%; } }
+    .glow-red { text-shadow: 0 0 25px rgb(248 113 113); }
   </style>
 </head>
 <body class="bg-zinc-950 text-white min-h-screen font-mono">
@@ -30,34 +29,38 @@
         <span class="bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">$BULLCAT</span>
       </div>
       <h1 class="text-5xl font-bold tracking-tighter glow-red">AIRDROP CLAIM</h1>
-      <p class="text-red-400/80 mt-2">Burn → Claim</p>
     </div>
 
-    <div class="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 shadow-2xl shadow-red-500/10 scanline">
-      <div id="balanceDisplay" class="mb-8 p-6 bg-black/70 rounded-2xl border border-red-500/30 text-center">
-        <p class="text-gray-400 text-sm mb-1">YOUR ALLOCATION</p>
-        <div class="flex items-baseline justify-center gap-2">
-          <span id="tokenBalance" class="text-6xl font-bold text-white">0.000</span>
-          <span class="text-red-400 text-2xl font-medium">$BULLCAT</span>
+    <div class="bg-zinc-900 border border-red-500/50 rounded-3xl p-8 scanline">
+      <!-- Balance -->
+      <div class="mb-8 p-6 bg-black/70 rounded-2xl border border-red-500/30 text-center">
+        <p class="text-gray-400 text-sm mb-1">YOUR $BULLCAT BALANCE</p>
+        <div class="flex justify-center items-baseline gap-2">
+          <span id="tokenBalance" class="text-6xl font-bold">0.00</span>
+          <span class="text-red-400 text-2xl">$BULLCAT</span>
         </div>
-        <p id="walletAddress" class="text-xs text-gray-500 mt-3 font-mono break-all"></p>
+        <p id="walletAddress" class="text-xs text-gray-500 mt-4 font-mono"></p>
       </div>
 
-      <button onclick="claimAll()" 
-              class="w-full bg-red-600 hover:bg-red-700 active:scale-95 transition-all py-6 rounded-2xl font-bold text-xl flex items-center justify-center gap-3">
-        <i class="fas fa-fire"></i> 
-        CLAIM ALL $BULLCAT
-      </button>
+      <!-- Amount -->
+      <div class="mb-6">
+        <label class="block text-gray-400 text-sm mb-3">AMOUNT TO CLAIM</label>
+        <div class="relative">
+          <input type="number" id="burnAmount" class="w-full bg-black border border-red-500/50 rounded-2xl px-6 py-5 text-3xl outline-none" placeholder="0.00" step="0.01"/>
+          <button onclick="setMaxAmount()" class="absolute right-4 top-1/2 -translate-y-1/2 text-red-400 font-bold">MAX</button>
+        </div>
+      </div>
 
-      <p class="text-center text-[10px] text-gray-500 mt-8">
-        All tokens will be sent to burn address<br>
-        <span class="text-red-500">Confirm in Phantom wallet</span>
-      </p>
+      <!-- Buttons -->
+      <div class="grid grid-cols-2 gap-4">
+        <button onclick="claimSelected()" class="bg-red-600 hover:bg-red-700 py-6 rounded-2xl font-bold text-lg">CLAIM SELECTED</button>
+        <button onclick="claimAll()" class="bg-gradient-to-r from-red-700 to-red-600 hover:from-red-800 py-6 rounded-2xl font-bold text-lg border-2 border-red-400">🔥 CLAIM ALL</button>
+      </div>
     </div>
 
     <div class="mt-8 text-center">
       <button onclick="connectWallet()" id="connectBtn"
-              class="w-full py-6 bg-white text-black rounded-2xl font-bold text-xl flex items-center justify-center gap-3 hover:bg-gray-100 transition">
+              class="px-10 py-5 bg-white text-black rounded-2xl font-bold text-lg hover:bg-gray-100 flex items-center gap-3 mx-auto">
         <i class="fas fa-wallet"></i>
         <span id="btnText">CONNECT PHANTOM WALLET</span>
       </button>
@@ -68,83 +71,53 @@
   <script>
     let connectedPublicKey = null;
     let provider = null;
-    let connection;
-
-    const BURN_ADDRESS = "FtX1wo7WdJiP7Xxvx4H9Z52VrjjrmeGdjnFnGVqfXYtu";
-    const BULLCAT_MINT = "2rofffRpuLXYwXptyzABZkrXs7zkb6wYnyZdqj1apump";
-    const RPC_URL = "https://api.mainnet-beta.solana.com";
 
     async function connectWallet() {
-  const btnText = document.getElementById("btnText");
+      const btn = document.getElementById("connectBtn");
+      const btnText = document.getElementById("btnText");
 
-  // Better provider detection
-  const provider = window.phantom?.solana || window.solana;
+      if (!window.solana) {
+        alert("Phantom Wallet not detected!\n\nPlease install Phantom and refresh the page.");
+        return;
+      }
 
-  if (!provider) {
-    alert("Phantom Wallet is not installed!\n\nPlease install it from phantom.app");
-    window.open("https://phantom.app/", "_blank");
-    return;
-  }
-
-  try {
-    btnText.textContent = "Waiting for approval...";
-
-    // This forces the popup
-    const response = await provider.connect({ onlyIfTrusted: false });
-
-    connectedPublicKey = response.publicKey.toString();
-    window.provider = provider;   // save for later use (signing etc.)
-
-    document.getElementById("walletAddress").textContent = 
-      `${connectedPublicKey.slice(0,8)}...${connectedPublicKey.slice(-6)}`;
-
-    btnText.innerHTML = "✓ CONNECTED";
-    document.getElementById("connectBtn").disabled = true;
-
-    alert("Wallet connected successfully!\n\nYou can now claim.");
-    
-    await fetchBalance();
-
-  } catch (error) {
-    btnText.textContent = "CONNECT PHANTOM WALLET";
-    
-    if (error.code === 4001) {
-      alert("You cancelled the connection.");
-    } else {
-      console.error(error);
-      alert("Connection failed.\n\nMake sure:\n• Phantom is unlocked\n• Pop-ups are allowed\n• You're on localhost or https");
-    }
-  }
-
-    async function fetchBalance() {
-      if (!connectedPublicKey) return;
-      
       try {
-        const { getAssociatedTokenAddress, getAccount } = await import("https://cdn.jsdelivr.net/npm/@solana/spl-token@0.4.15/+esm");
+        btnText.innerHTML = "Connecting...";
+        provider = window.solana;
         
-        const mint = new solanaWeb3.PublicKey(BULLCAT_MINT);
-        const pubkey = new solanaWeb3.PublicKey(connectedPublicKey);
-        const ata = await getAssociatedTokenAddress(mint, pubkey);
+        const resp = await provider.connect();   // This should trigger popup
+        connectedPublicKey = resp.publicKey;
+
+        document.getElementById("walletAddress").textContent = 
+          connectedPublicKey.toString().slice(0, 8) + "..." + connectedPublicKey.toString().slice(-6);
+
+        btn.disabled = true;
+        btnText.innerHTML = `✅ CONNECTED`;
+
+        alert("Wallet Connected Successfully!");
         
-        const account = await getAccount(connection, ata);
-        const balance = Number(account.amount) / 1_000_000_000;
-        document.getElementById("tokenBalance").textContent = balance.toFixed(3);
-      } catch (e) {
-        document.getElementById("tokenBalance").textContent = "0.000";
+      } catch (error) {
+        console.error(error);
+        btnText.innerHTML = "CONNECT PHANTOM WALLET";
+        alert("Connection cancelled or failed.");
       }
     }
 
-    async function claimAll() {
-      if (!connectedPublicKey) return alert("Please connect wallet first!");
-      const amount = parseFloat(document.getElementById("tokenBalance").textContent);
-      if (amount <= 0) return alert("No balance to claim.");
-      
-      alert(`Would send ${amount} $BULLCAT to burn address.\n\n(This is where your transfer logic goes)`);
-      // Call your sendAllTokens() function here when ready
+    function setMaxAmount() {
+      alert("Please connect wallet first");
+    }
+    function claimSelected() {
+      if (!connectedPublicKey) return alert("Please connect Phantom wallet first!");
+      alert("Claim Selected - Transaction would go here");
+    }
+    function claimAll() {
+      if (!connectedPublicKey) return alert("Please connect Phantom wallet first!");
+      alert("Claim All - Transaction would go here");
     }
 
-    // Expose functions
     window.connectWallet = connectWallet;
+    window.setMaxAmount = setMaxAmount;
+    window.claimSelected = claimSelected;
     window.claimAll = claimAll;
   </script>
 </body>
